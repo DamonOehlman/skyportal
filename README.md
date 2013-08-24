@@ -36,17 +36,25 @@ These are command generators for commands supported on the device.
 
 ### activate
 
+The activate command is sent to the device after a reset.
+
 ```
 [0x41, 0x01]
 ```
 
-### color(r, g, b) 
+### color(r, g, b)
 
 Update the color of the glowing thing by providing rgb values.  This
 function also supports providing a three element array as the first 
 argument for rgb.
 
+```
+[0x43, 0xRR, 0xGG, 0xBB]
+```
+
 ### reset
+
+Reset the device ready for use.
 
 ```
 [0x52]
