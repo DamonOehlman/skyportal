@@ -25,6 +25,8 @@ var outpoints = [
   0x02
 ];
 
+var RESPONSE_SIZE = 0x20;
+
 
 /**
   # skyportal
@@ -114,6 +116,15 @@ var open = exports.open = function(portal, callback) {
     portal.i = di.endpoint(inpoints[portal.productIdx] || 0x81);
     portal.o = di.endpoint(outpoints[portal.productIdx] || 0x02);
 
+    // check the portal input and ouput are value
+    if (!portal.i || portal.i.direction !== 'in') {
+      return callback(new Error('Unable to find input interrupt'));
+    }
+
+    if (!portal.o || portal.o.direction !== 'out') {
+      return callback(new Error('Unable to find output interrupt'));
+    }
+
     // send the reset signal to the device
     send(commands.reset(), portal, function(err) {
       if (err) {
@@ -123,6 +134,19 @@ var open = exports.open = function(portal, callback) {
       // send the activate and trigger the outer callback
       send(commands.activate(), portal, callback);
     });
+  });
+};
+
+/**
+  ### skyportal.read(portal, callback)
+
+  Read the current state of the portal.
+
+**/
+var read = exports.read = function(portal, callback) {
+  var prefixLen = portal.commandPrefix.length;
+  portal.i.transfer(RESPONSE_SIZE, function(err, data) {
+    callback(err, err ? null : (prefixLen ? data.slice(prefixLen) : data));
   });
 };
 
