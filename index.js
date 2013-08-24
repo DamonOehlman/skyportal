@@ -140,7 +140,7 @@ var open = exports.open = function(portal, callback) {
 /**
   ### skyportal.read(portal, callback)
 
-  Read the current state of the portal.
+  Read data from the portal.
 
 **/
 var read = exports.read = function(portal, callback) {

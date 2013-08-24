@@ -21,10 +21,18 @@ Look for a skyportal within the current usb devices.
 Open the portal using the portal data that has been retrieved
 from a find operation.
 
+### skyportal.read(portal, callback)
+
+Read data from the portal.
+
 ### skyportal.send(bytes, portal, callback)
 
 Send a chunk of bytes to the portal. If required the device appropriate
 command prefix will be prepended to the bytes before sending.
+
+## Commands
+
+These are command generators for commands supported on the device.
 
 ### activate
 
@@ -32,7 +40,15 @@ command prefix will be prepended to the bytes before sending.
 [0x41, 0x01]
 ```
 
-## Commands
+### color(r, g, b) 
+
+Update the color of the glowing thing by providing rgb values.  This
+function also supports providing a three element array as the first 
+argument for rgb.
+
+### status()
+
+Ask for the status updates to start
 
 ### reset
 
