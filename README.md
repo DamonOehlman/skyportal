@@ -46,10 +46,6 @@ Update the color of the glowing thing by providing rgb values.  This
 function also supports providing a three element array as the first 
 argument for rgb.
 
-### status()
-
-Ask for the status updates to start
-
 ### reset
 
 ```

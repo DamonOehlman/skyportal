@@ -34,17 +34,10 @@ test('change the color of the portal (rgb array)', function(t) {
   });
 });
 
-test('request status updates to start', function(t) {
-  t.plan(1);
-  skyportal.send(commands.status(), portal, function(err) {
-    t.ifError(err, 'no error');
-  });
-});
-
 test('read the status of the portal', function(t) {
-  t.plan(1);
+  t.plan(2);
   skyportal.read(portal, function(err, data) {
     t.ifError(err);
-    console.log(data);
+    t.ok(data instanceof Buffer, 'have some data');
   });
 });

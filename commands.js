@@ -32,15 +32,6 @@ exports.color = function(r, g, b) {
 };
 
 /**
-  ### status()
-
-  Ask for the status updates to start
-**/
-exports.status = function() {
-  return [0x53];
-};
-
-/**
   ### reset
 
   ```
