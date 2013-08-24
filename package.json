@@ -1,0 +1,29 @@
+{
+  "name": "skyportal",
+  "version": "0.0.0",
+  "description": "A usb interface to a particular rfid reader / writer",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/all.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DamonOehlman/skyportal.git"
+  },
+  "keywords": [
+    "rfid",
+    "usb"
+  ],
+  "author": "Damon Oehlman <damon.oehlman@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/DamonOehlman/skyportal/issues"
+  },
+  "dependencies": {
+    "usb": "~0.2.3",
+    "debug": "*"
+  },
+  "devDependencies": {
+    "tape": "~1.0.4"
+  }
+}
