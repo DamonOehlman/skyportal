@@ -21,8 +21,7 @@
     "url": "https://github.com/DamonOehlman/skyportal/issues"
   },
   "dependencies": {
-    "usb": "~0.2.3",
-    "debug": "*"
+    "usb": "~0.2.3"
   },
   "devDependencies": {
     "tape": "~1.0.4"

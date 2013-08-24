@@ -2,7 +2,6 @@
 'use strict';
 
 var commands = require('./commands');
-var debug = require('debug')('skyportal');
 var usb = require('usb');
 var vendorList = [0x1430];
 var productList = [
