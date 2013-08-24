@@ -1,7 +1,7 @@
 /* jshint node: true */
 'use strict';
 
-var commands = require('./commands');
+var commands = exports.commands = require('./commands');
 var usb = require('usb');
 var vendorList = [0x1430];
 var productList = [
@@ -35,6 +35,18 @@ var RESPONSE_SIZE = 0x20;
   to double as a very nice glowy thing.  The library itself have been written
   to support multiple skyportals on the one machine allowing you do so
   some pretty neat things when you have a few usb ports spare :)
+
+  ## Usage
+
+  This module does just the bare bones required to communicate with the
+  device, but does make interfacing with a skyportal pretty accessible.  The
+  follow example demonstrates opening a portal and setting it's color to
+  green.
+
+  <<< examples/green-portal.js
+
+  __NOTE:__ Running the examples (at least on my machine required root user
+  privileges to open the device, so you may need to `sudo` the examples).
 
   ## Reference
 
@@ -132,7 +144,9 @@ var open = exports.open = function(portal, callback) {
       }
 
       // send the activate and trigger the outer callback
-      send(commands.activate(), portal, callback);
+      send(commands.activate(), portal, function(err) {
+        callback(err, err ? null : portal);
+      });
     });
   });
 };
