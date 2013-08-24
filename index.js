@@ -1,3 +1,7 @@
+/* jshint node: true */
+'use strict';
+
+var commands = require('./commands');
 var debug = require('debug')('skyportal');
 var usb = require('usb');
 var vendorList = [0x1430];
@@ -9,9 +13,19 @@ var productList = [
 // initialise the command prefixes which matches index for index with
 // the product list
 var commandPrefixes = [
-  [],
-  [0x0B, 0x14]
+  [0x0B, 0x14],
+  []
 ];
+
+// initialise the input endpoints for the various product ids
+var inpoints = [
+  0x81
+];
+// initialise the output endpoints for the various product ids
+var outpoints = [
+  0x02
+];
+
 
 /**
   # skyportal
@@ -28,24 +42,104 @@ var commandPrefixes = [
   Look for a skyportal within the current usb devices.
 
 **/
-exports.find = function(index) {
-  var portal;
+var find = exports.find = function(index) {
+  var device;
   var productIdx;
 
   // get the portal
-  portal = usb.getDeviceList().filter(isPortal)[index || 0];
+  device = usb.getDeviceList().filter(isPortal)[index || 0];
 
-  // if we don't have a portal, return
-  if (! portal) {
+  // if we don't have a device, return
+  if (! device) {
     return;
   }
 
-  // patch in the command prefix into the device data
-  productIdx = productList.indexOf(portal.deviceDescriptor.idProduct);
-  portal.commandPrefix = commandPrefixes[productIdx] || [];
+  // find the product index so we can patch in the appropriate command prefix
+  productIdx = productList.indexOf(device.deviceDescriptor.idProduct);
 
-  // return the portal
-  return portal;
+  return {
+    commandPrefix: commandPrefixes[productIdx] || [],
+    device: device,
+    productIdx: productIdx
+  };
+};
+
+/**
+  ### skyportal.open(portal, callback)
+
+  Open the portal using the portal data that has been retrieved
+  from a find operation.
+
+**/
+var open = exports.open = function(portal, callback) {
+  var device = (portal || {}).device;
+
+  // if we don't have a valid device, then abort
+  if (! device) {
+    return callback(new Error('no device data'));
+  }
+
+  try {
+    // open the device
+    device.open();
+  }
+  catch (e) {
+    return callback(e);
+  }
+
+  // reset the device and then open the interface
+  device.reset(function(err) {
+    var di;
+
+    if (err) {
+      return callback(err);
+    }
+
+    // select the portal interface
+    di = device.interface(0);
+
+    // if the kernel driver is active for the interface, release
+    if (di.isKernelDriverActive()) {
+      di.detachKernelDriver();
+    }
+
+    // claim the interface (um, horizon)
+    try {
+      di.claim();
+    }
+    catch (e) {
+      return callback(e);
+    }
+
+    // patch in the input and output endpoints
+    portal.i = di.endpoint(inpoints[portal.productIdx] || 0x81);
+    portal.o = di.endpoint(outpoints[portal.productIdx] || 0x02);
+
+    // send the reset signal to the device
+    send(commands.reset(), portal, function(err) {
+      if (err) {
+        return callback(err);
+      }
+
+      // send the activate and trigger the outer callback
+      send(commands.activate(), portal, callback);
+    });
+  });
+};
+
+/**
+  ### skyportal.send(bytes, portal, callback)
+
+  Send a chunk of bytes to the portal. If required the device appropriate
+  command prefix will be prepended to the bytes before sending.
+
+**/
+var send = exports.send = function(bytes, portal, callback) {
+  // TODO: handle bytes being provided in another format
+  var data = new Buffer(portal.commandPrefix.concat(bytes || []));
+
+  // send the data
+  portal.o.transfer(data, callback);
 };
 
 /* internal functions */
@@ -54,118 +148,3 @@ function isPortal(device) {
   return vendorList.indexOf(device.deviceDescriptor.idVendor) >= 0 &&
     productList.indexOf(device.deviceDescriptor.idProduct) >= 0;
 }
-
-exports.init = function(vendorId, productId, cb) {
-  var device = usb.findByIds(vendorId, productId);
-  var portal;
-
-  function exec(callback) {
-    debug('looking for device: vendorid = 0x' + vendorId.toString(16) +
-      ', productid = 0x' + productId.toString(16));
-
-    if (! device) {
-      return callback(new Error('Unable to find the device'));
-    }
-
-    // open the device
-    try {
-      debug('attempting to open the device');
-      device.open();
-    }
-    catch (e) {
-      return callback(e);
-    }
-
-    // attempt a device reset
-    device.reset(function(err) {
-      var input;
-      var output;
-      var oldPresenceByte;
-
-      if (err) return callback(err);
-
-      // open the portal
-      portal = device.interface(0);
-
-      if (portal.isKernelDriverActive()) {
-        debug('kernel driver active for the portal, detaching');
-        portal.detachKernelDriver();
-      }
-
-      // claim the interface
-      try {
-        debug('attempting to claim appropriate of the device');
-        portal.claim();
-      }
-      catch (e) {
-        return callback(e);
-      }
-
-      output = portal.endpoint(0x02);
-      input = portal.endpoint(0x81);
-
-      // console.log(portal.endpoints);
-      console.log(output.direction);
-      console.log(input.direction);
-
-      input.on('error', function(err) {
-        debug('captured error: ', err);
-      });
-
-      input.on('data', function(data) {
-        var command = data[0 + commandPrefix.length];
-        var flag = data[1 + commandPrefix.length];
-        var payload;
-
-        debug('.');
-
-        if (command === 0x53) {
-          if (flag !== oldPresenceByte && flag) {
-            debug('presence byte changed: ', flag.toString(16));
-            output.transfer(new Buffer(commandPrefix.concat([0x51, 0x21, 0x00])));
-          }
-
-          oldPresenceByte = flag;
-        }
-        else if (command === 0x51) {
-          debug('received data', flag.toString(16));
-          if (flag === 0x01) {
-            debug('received query error, sending query for existing skylander data');
-            output.transfer(new Buffer(commandPrefix.concat([0x51, 0x20, 0x00])));
-          }
-          else if (flag >= 0x10) {
-            debug('received character data chunk: ', flag.toString(16), data[4], data.slice(5, 5 + 16));
-            if (data[4] < 63) {
-              output.transfer(new Buffer(commandPrefix.concat([0x51, flag, data[4] + 1])));
-            }
-          }
-        }
-        else {
-          debug('got command: ' + command.toString() + ' data: ', data.slice(0 + commandPrefix.length(), 20 + commandPrefix.length()));
-        }
-      });
-
-      console.log(input);
-      // input.startStream(3, (commandPrefix.length + 20) * 8);
-
-      async.mapSeries([
-        new Buffer(commandPrefix.concat([0x52])), // R 
-        new Buffer(commandPrefix.concat([0x41, 0x01])), // A, 0x01
-        new Buffer(commandPrefix.concat([0x43, 0xFF, 0x00, 0x00])), // C red
-        new Buffer(commandPrefix.concat([0x43, 0x00, 0xFF, 0x00])), // C green
-        new Buffer(commandPrefix.concat([0x43, 0x00, 0x00, 0xFF])), // C blue
-        new Buffer(commandPrefix.concat([0x53])) // S 
-      ], output.transfer.bind(output), function(err, results) {
-        process.stdin.resume();
-        // input.startStream(3, (commandPrefix.length + 20) * 8);
-
-        console.log(results);
-        input.transfer((commandPrefix.length + 20) * 8, function(err, data) {
-          console.log(data.slice(2));
-        });
-      });
-    });
-  }
-
-  return cb ? exec(cb) : exec;
-};
