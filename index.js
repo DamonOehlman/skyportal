@@ -48,6 +48,13 @@ var RESPONSE_SIZE = 0x20;
   __NOTE:__ Running the examples (at least on my machine required root user
   privileges to open the device, so you may need to `sudo` the examples).
 
+  ## Compatibility
+
+  At this stage this has only been tested with the USB version of the portal
+  (Xbox 360) on Linux.  It has been coded in such a way that compatibility
+  with other portal models is quite easy to implement, so feel to send 
+  through a pull request :)
+
   ## Reference
 
   ### skyportal.find(index == 0)
@@ -89,7 +96,7 @@ var open = exports.open = function(portal, callback) {
 
   // if we don't have a valid device, then abort
   if (! device) {
-    return callback(new Error('no device data'));
+    return callback(new Error('No device data'));
   }
 
   try {
@@ -114,6 +121,9 @@ var open = exports.open = function(portal, callback) {
     // if the kernel driver is active for the interface, release
     if (di.isKernelDriverActive()) {
       di.detachKernelDriver();
+
+      // flag that we need to reattach the kernel driver
+      portal._reattach = true;
     }
 
     // claim the interface (um, horizon)
@@ -177,6 +187,47 @@ var send = exports.send = function(bytes, portal, callback) {
 
   // send the data
   portal.o.transfer(data, callback);
+};
+
+/**
+  ### skyportal.release(portal, callback)
+
+  Release the portal device bindings.
+
+**/
+var release = exports.release = function(portal, callback) {
+  var device = (portal || {}).device;
+  var di = device ? device.interface(0) : null;
+
+  // ensure we have a callback
+  callback = callback || function() {};
+
+  // if we don't have a valid device, then abort
+  if (! di) {
+    return callback(new Error('No device data'));
+  }
+
+  di.release(function(err) {
+    if (err) {
+      return callback(err);
+    }
+
+    // release the input and output endpoints
+    portal.i = undefined;
+    portal.o = undefined;
+
+    if (portal._reattach) {
+      di.attachKernelDriver();
+      portal._reattach = false;
+    }
+
+    // release the device reference
+    portal.device = undefined;
+
+    // TODO: close
+    // device.close();
+    callback();
+  });
 };
 
 /* internal functions */

@@ -29,6 +29,13 @@ skyportal.open(skyportal.find(), function(err, portal) {
 __NOTE:__ Running the examples (at least on my machine required root user
 privileges to open the device, so you may need to `sudo` the examples).
 
+## Compatibility
+
+At this stage this has only been tested with the USB version of the portal
+(Xbox 360) on Linux.  It has been coded in such a way that compatibility
+with other portal models is quite easy to implement, so feel to send 
+through a pull request :)
+
 ## Reference
 
 ### skyportal.find(index == 0)
@@ -48,6 +55,10 @@ Read data from the portal.
 
 Send a chunk of bytes to the portal. If required the device appropriate
 command prefix will be prepended to the bytes before sending.
+
+### skyportal.release(portal, callback)
+
+Release the portal device bindings.
 
 ## Commands
 
