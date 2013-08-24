@@ -10,6 +10,25 @@ some pretty neat things when you have a few usb ports spare :)
 
 [![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
 
+## Usage
+
+This module does just the bare bones required to communicate with the
+device, but does make interfacing with a skyportal pretty accessible.  The
+follow example demonstrates opening a portal and setting it's color to
+green.
+
+```js
+var skyportal = require('skyportal');
+var commands = skyportal.commands;
+
+skyportal.open(skyportal.find(), function(err, portal) {
+  skyportal.send(commands.color(0, 255, 0), portal);
+});
+```
+
+__NOTE:__ Running the examples (at least on my machine required root user
+privileges to open the device, so you may need to `sudo` the examples).
+
 ## Reference
 
 ### skyportal.find(index == 0)
