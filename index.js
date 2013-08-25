@@ -104,7 +104,7 @@ var open = exports.open = function(portal, callback) {
     device.open();
   }
   catch (e) {
-    return callback(e);
+    return callback(wrapUsbError('Could not open the portal', e));
   }
 
   // reset the device and then open the interface
@@ -112,7 +112,7 @@ var open = exports.open = function(portal, callback) {
     var di;
 
     if (err) {
-      return callback(err);
+      return callback(wrapUsbError('Could not perform reset', err));
     }
 
     // select the portal interface
@@ -131,7 +131,7 @@ var open = exports.open = function(portal, callback) {
       di.claim();
     }
     catch (e) {
-      return callback(e);
+      return callback(wrapUsbError('Could not claim usb interface', e));
     }
 
     // patch in the input and output endpoints
@@ -150,7 +150,7 @@ var open = exports.open = function(portal, callback) {
     // send the reset signal to the device
     send(commands.reset(), portal, function(err) {
       if (err) {
-        return callback(err);
+        return callback(wrapUsbError('Could not send reset command', err));
       }
 
       // send the activate and trigger the outer callback
@@ -235,4 +235,12 @@ var release = exports.release = function(portal, callback) {
 function isPortal(device) {
   return vendorList.indexOf(device.deviceDescriptor.idVendor) >= 0 &&
     productList.indexOf(device.deviceDescriptor.idProduct) >= 0;
+}
+
+function wrapUsbError(msg, usbError) {
+  var err = new Error(msg + ' (libusb error: ' + usbError.toString() + ')');
+
+  // attach the usb error
+  err.usb = usbError;
+  return err;
 }
