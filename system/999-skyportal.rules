@@ -1,0 +1,16 @@
+# 999-skyportal.rules
+
+ACTION!="add", GOTO="skyportal_end"
+SUBSYSTEM=="usb_device", GOTO="skyportal_start"
+SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", GOTO="skyportal_start"
+GOTO="skyportal_end"
+
+LABEL="skyportal_start"
+
+# wired portal
+ATTR{idVendor}=="1430", ATTR{idProduct}=="1f17", MODE="666"
+
+# wireless wii portal (I think)
+ATTR{idVendor}=="1430", ATTR{idProduct}=="0150", MODE="666"
+
+LABEL="skyportal_end"
