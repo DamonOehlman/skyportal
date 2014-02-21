@@ -55,6 +55,11 @@ var RESPONSE_SIZE = 0x20;
   with other portal models is quite easy to implement, so feel to send 
   through a pull request :)
 
+  You may need to apply some system updates to get it working though, see the
+  following url for more info:
+
+  https://bitbucket.org/DamonOehlman/skyportal/src/HEAD/system/
+
   ## Reference
 
   ### skyportal.find(index == 0)

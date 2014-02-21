@@ -36,6 +36,11 @@ At this stage this has only been tested with the USB version of the portal
 with other portal models is quite easy to implement, so feel to send 
 through a pull request :)
 
+You may need to apply some system updates to get it working though, see the
+following url for more info:
+
+https://bitbucket.org/DamonOehlman/skyportal/src/HEAD/system/
+
 ## Reference
 
 ### skyportal.find(index == 0)
@@ -94,7 +99,7 @@ Reset the device ready for use.
 
 ### MIT
 
-Copyright (c) 2013 Damon Oehlman <damon.oehlman@gmail.com>
+Copyright (c) 2014 Damon Oehlman <damon.oehlman@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
