@@ -2,6 +2,7 @@
 'use strict';
 
 var commands = exports.commands = require('./commands');
+var debug = require('debug')('skyportal');
 var usb = require('usb');
 var vendorList = [0x1430];
 var productList = [
@@ -52,7 +53,7 @@ var RESPONSE_SIZE = 0x20;
 
   At this stage this has only been tested with the USB version of the portal
   (Xbox 360) on Linux.  It has been coded in such a way that compatibility
-  with other portal models is quite easy to implement, so feel to send 
+  with other portal models is quite easy to implement, so feel to send
   through a pull request :)
 
   You may need to apply some system updates to get it working though, see the
@@ -175,6 +176,7 @@ var open = exports.open = function(portal, callback) {
 var read = exports.read = function(portal, callback) {
   var prefixLen = portal.commandPrefix.length;
   portal.i.transfer(RESPONSE_SIZE, function(err, data) {
+    debug('<-- ', data);
     callback(err, err ? null : (prefixLen ? data.slice(prefixLen) : data));
   });
 };
@@ -191,6 +193,7 @@ var send = exports.send = function(bytes, portal, callback) {
   var data = new Buffer(portal.commandPrefix.concat(bytes || []));
 
   // send the data
+  debug('--> ', data.length, data);
   portal.o.transfer(data, callback);
 };
 
