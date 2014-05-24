@@ -4,6 +4,7 @@
 var commands = exports.commands = require('./commands');
 var debug = require('debug')('skyportal');
 var usb = require('usb');
+var times = require('whisk/times');
 var vendorList = [0x1430];
 var productList = [
   0x1f17,  // usb wired (pc, xbox)
@@ -27,6 +28,9 @@ var outpoints = [
 ];
 
 var RESPONSE_SIZE = 0x20;
+var REQUEST_PADDING = times(RESPONSE_SIZE).map(function() {
+  return 0;
+});
 
 
 /**
@@ -176,7 +180,7 @@ var open = exports.open = function(portal, callback) {
 var read = exports.read = function(portal, callback) {
   var prefixLen = portal.commandPrefix.length;
   portal.i.transfer(RESPONSE_SIZE, function(err, data) {
-    debug('<-- ', data);
+    debug('<-- ', data.length, data);
     callback(err, err ? null : (prefixLen ? data.slice(prefixLen) : data));
   });
 };
@@ -190,7 +194,18 @@ var read = exports.read = function(portal, callback) {
 **/
 var send = exports.send = function(bytes, portal, callback) {
   // TODO: handle bytes being provided in another format
-  var data = new Buffer(portal.commandPrefix.concat(bytes || []));
+  var payload = portal.commandPrefix.concat(bytes || []);
+  var data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
+
+  // send the data
+  debug('--> ', data.length, data);
+  portal.o.transfer(data, callback);
+};
+
+var sendRaw = exports.sendRaw = function(bytes, portal, callback) {
+  // TODO: handle bytes being provided in another format
+  var payload = portal.commandPrefix.concat(bytes || []);
+  var data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
 
   // send the data
   debug('--> ', data.length, data);
