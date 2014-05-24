@@ -1,6 +1,8 @@
 /* jshint node: true */
 'use strict';
 
+var DATABUFFER_EMPTY = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
 /**
   ## Commands
 
@@ -25,7 +27,7 @@ exports.activate = function() {
   ### color(r, g, b)
 
   Update the color of the glowing thing by providing rgb values.  This
-  function also supports providing a three element array as the first 
+  function also supports providing a three element array as the first
   argument for rgb.
 
   ```
@@ -35,6 +37,20 @@ exports.activate = function() {
 **/
 exports.color = function(r, g, b) {
   return [0x43].concat(Array.isArray(r) ? r : [].slice.call(arguments));
+};
+
+
+/**
+  ### query(tagIdx, blockIdx)
+
+  Query a tag that is currently on the portal.  Data is returned in blocks,
+  so use the `blockIdx` to target a specific block of data.
+
+  ```
+  [0x51, 0x20 + tagIdx, blockIdx]
+**/
+exports.query = function(tagIdx, blockIdx) {
+  return [0x51, 0x21, 0x10, 0x00].concat(DATABUFFER_EMPTY.slice(4));
 };
 
 /**
