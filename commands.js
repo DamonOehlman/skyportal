@@ -1,8 +1,6 @@
 /* jshint node: true */
 'use strict';
 
-var DATABUFFER_EMPTY = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
 /**
   ## Commands
 
@@ -50,7 +48,7 @@ exports.color = function(r, g, b) {
   [0x51, 0x20 + tagIdx, blockIdx]
 **/
 exports.query = function(tagIdx, blockIdx) {
-  return [0x51, 0x21, 0x10, 0x00].concat(DATABUFFER_EMPTY.slice(4));
+  return [0x51, (blockIdx ? 0x10 : 0x20) + tagIdx, blockIdx];
 };
 
 /**
@@ -64,4 +62,8 @@ exports.query = function(tagIdx, blockIdx) {
 **/
 exports.reset = function() {
   return [0x52];
+};
+
+exports.status = function() {
+  return [0x53];
 };
