@@ -22,7 +22,8 @@
   },
   "dependencies": {
     "debug": "^0.8.1",
-    "usb": "~0.3"
+    "usb": "~0.3",
+    "whisk": "^0.6.1"
   },
   "devDependencies": {
     "tape": "^2",
