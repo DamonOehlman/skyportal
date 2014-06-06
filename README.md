@@ -21,7 +21,7 @@ green.
 var skyportal = require('skyportal');
 var commands = skyportal.commands;
 
-skyportal.open(skyportal.find(), function(err, portal) {
+skyportal.init(function(err, portal) {
   skyportal.send(commands.color(0, 255, 0), portal);
 });
 
@@ -47,6 +47,12 @@ https://bitbucket.org/DamonOehlman/skyportal/src/HEAD/system/
 ### skyportal.find(index == 0)
 
 Look for a skyportal within the current usb devices.
+
+### skyportal.init(opts?, callback)
+
+The `init` function of the skyportal module is best way to get yourself a
+correctly open initialized portal.  In short, you should pretty much
+always use it.
 
 ### skyportal.open(portal, callback)
 
