@@ -115,7 +115,7 @@ var init = exports.init = function(opts, callback) {
     }
 
     if (initCommands.length === 0) {
-      return callback();
+      return callback(null, portal);
     }
 
     send(initCommands.shift(), portal, sendNextInit);
