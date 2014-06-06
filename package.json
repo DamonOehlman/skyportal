@@ -1,6 +1,6 @@
 {
   "name": "skyportal",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "A usb interface to a particular rfid reader / writer",
   "main": "index.js",
   "scripts": {
