@@ -2,7 +2,7 @@ var skyportal = require('../');
 var commands = skyportal.commands;
 var async = require('async');
 
-skyportal.open(skyportal.find(), function(err, portal) {
+skyportal.init(function(err, portal) {
 
   function query(blockIdx, callback) {
     skyportal.send(commands.query(0x01, blockIdx), portal, function(err) {
