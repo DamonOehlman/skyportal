@@ -95,6 +95,42 @@ var find = exports.find = function(index) {
 };
 
 /**
+  ### skyportal.init(opts?, callback)
+
+  The `init` function of the skyportal module is best way to get yourself a
+  correctly open initialized portal.  In short, you should pretty much
+  always use it.
+
+**/
+var init = exports.init = function(opts, callback) {
+  var portal;
+  var initCommands = [
+    commands.reset,
+    commands.activate
+  ];
+
+  function sendNextInit(err) {
+    if (err) {
+      return callback(err);
+    }
+
+    if (initCommands.length === 0) {
+      return callback();
+    }
+
+    send(initCommands.shift(), portal, sendNextInit);
+  }
+
+  if (typeof opts == 'function') {
+    callback = opts;
+    opts = null;
+  }
+
+  open(portal = find((opts || {}).index), sendNextInit);
+  return portal;
+};
+
+/**
   ### skyportal.open(portal, callback)
 
   Open the portal using the portal data that has been retrieved
