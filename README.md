@@ -8,7 +8,7 @@ some pretty neat things when you have a few usb ports spare :)
 
 [![NPM](https://nodei.co/npm/skyportal.png)](https://nodei.co/npm/skyportal/)
 
-[![experimental](https://img.shields.io/badge/stability-experimental-red.svg)](https://github.com/badges/stability-badges) 
+[![experimental](https://img.shields.io/badge/stability-experimental-red.svg)](https://github.com/dominictarr/stability#experimental) 
 
 ## Usage
 
@@ -114,7 +114,7 @@ Reset the device ready for use.
 
 ### MIT
 
-Copyright (c) 2014 Damon Oehlman <damon.oehlman@gmail.com>
+Copyright (c) 2016 Damon Oehlman <damon.oehlman@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
