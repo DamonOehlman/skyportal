@@ -179,7 +179,7 @@ var open = exports.open = function(portal, callback) {
     catch (e) {
       return callback(wrapUsbError('Could not claim usb interface', e));
     }
-
+    
     // patch in the input and output endpoints
     portal.i = di.endpoint(inpoints[portal.productIdx] || 0x81);
     portal.o = di.endpoint(outpoints[portal.productIdx] || 0x02);
@@ -214,6 +214,10 @@ var open = exports.open = function(portal, callback) {
 
 **/
 var read = exports.read = function(portal, callback) {
+  if (!portal || !portal.i) {
+    return callback(new Error('no portal input attached'));
+  }
+
   var prefixLen = portal.commandPrefix.length;
   portal.i.transfer(RESPONSE_SIZE, function(err, data) {
     debug('<-- ', data.length, data);
@@ -229,6 +233,10 @@ var read = exports.read = function(portal, callback) {
 
 **/
 var send = exports.send = function(bytes, portal, callback) {
+  if (!portal || !portal.o) {
+    return callback(new Error('no portal output attached'));
+  }
+
   // TODO: handle bytes being provided in another format
   var payload = portal.commandPrefix.concat(bytes || []);
   var data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
@@ -239,6 +247,10 @@ var send = exports.send = function(bytes, portal, callback) {
 };
 
 var sendRaw = exports.sendRaw = function(bytes, portal, callback) {
+  if (!portal || !portal.o) {
+    return callback(new Error('no portal output attached'));
+  }
+
   // TODO: handle bytes being provided in another format
   var payload = portal.commandPrefix.concat(bytes || []);
   var data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
