@@ -1,9 +1,4 @@
-var skyportal = require('../');
-var commands = skyportal.commands;
+const skyportal = require('../');
+const commands = skyportal.commands;
 
-skyportal.init(function(err, portal) {
-  if (err) {
-    throw err;
-  }
-  skyportal.send(commands.color(0, 255, 0), portal);
-});
+skyportal.init().then(portal => portal.write(commands.color(0, 255, 0)));
