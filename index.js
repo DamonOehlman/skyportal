@@ -72,27 +72,21 @@ var REQUEST_PADDING = times(RESPONSE_SIZE).map(function() {
   Look for a skyportal within the current usb devices.
 
 **/
-var find = exports.find = function(index) {
-  var device;
-  var productIdx;
-
+function find(index) {
   // get the portal
-  device = usb.getDeviceList().filter(isPortal)[index || 0];
-
-  // if we don't have a device, return
-  if (! device) {
+  const device = usb.getDeviceList().filter(isPortal)[index || 0];
+  if (!device) {
     return;
   }
 
   // find the product index so we can patch in the appropriate command prefix
-  productIdx = productList.indexOf(device.deviceDescriptor.idProduct);
-
+  const productIdx = productList.indexOf(device.deviceDescriptor.idProduct);
   return {
     commandPrefix: commandPrefixes[productIdx] || [],
-    device: device,
-    productIdx: productIdx
+    device,
+    productIdx
   };
-};
+}
 
 /**
   ### skyportal.init(opts?, callback)
@@ -102,7 +96,7 @@ var find = exports.find = function(index) {
   always use it.
 
 **/
-var init = exports.init = function(opts, callback) {
+function init(opts, callback) {
   var portal;
   var initCommands = [
     commands.reset,
@@ -137,7 +131,7 @@ var init = exports.init = function(opts, callback) {
   from a find operation.
 
 **/
-var open = exports.open = function(portal, callback) {
+function open(portal, callback) {
   var device = (portal || {}).device;
 
   // if we don't have a valid device, then abort
@@ -179,7 +173,7 @@ var open = exports.open = function(portal, callback) {
     catch (e) {
       return callback(wrapUsbError('Could not claim usb interface', e));
     }
-    
+
     // patch in the input and output endpoints
     portal.i = di.endpoint(inpoints[portal.productIdx] || 0x81);
     portal.o = di.endpoint(outpoints[portal.productIdx] || 0x02);
@@ -213,9 +207,9 @@ var open = exports.open = function(portal, callback) {
   Read data from the portal.
 
 **/
-var read = exports.read = function(portal, callback) {
+function read(portal, callback) {
   if (!portal || !portal.i) {
-    return callback(new Error('no portal input attached'));
+    return callback && callback(new Error('no portal input attached'));
   }
 
   var prefixLen = portal.commandPrefix.length;
@@ -232,9 +226,9 @@ var read = exports.read = function(portal, callback) {
   command prefix will be prepended to the bytes before sending.
 
 **/
-var send = exports.send = function(bytes, portal, callback) {
+function send(bytes, portal, callback) {
   if (!portal || !portal.o) {
-    return callback(new Error('no portal output attached'));
+    return callback && callback(new Error('no portal output attached'));
   }
 
   // TODO: handle bytes being provided in another format
@@ -246,9 +240,9 @@ var send = exports.send = function(bytes, portal, callback) {
   portal.o.transfer(data, callback);
 };
 
-var sendRaw = exports.sendRaw = function(bytes, portal, callback) {
+function sendRaw(bytes, portal, callback) {
   if (!portal || !portal.o) {
-    return callback(new Error('no portal output attached'));
+    return callback && callback(new Error('no portal output attached'));
   }
 
   // TODO: handle bytes being provided in another format
@@ -266,7 +260,7 @@ var sendRaw = exports.sendRaw = function(bytes, portal, callback) {
   Release the portal device bindings.
 
 **/
-var release = exports.release = function(portal, callback) {
+function release(portal, callback) {
   var device = (portal || {}).device;
   var di = device ? device.interface(0) : null;
 
@@ -315,3 +309,13 @@ function wrapUsbError(msg, usbError) {
   err.usb = usbError;
   return err;
 }
+
+module.exports = {
+  find,
+  init,
+  open,
+  read,
+  send,
+  sendRaw,
+  release
+};

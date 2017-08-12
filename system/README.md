@@ -1,5 +1,7 @@
 ## Skyportal System File Helpers
 
+### LINUX
+
 To get access working nicely on linux you will need to create an appropriate
 udev rules file for the portal to be able to be accessed by general users. To
 do this, copy the `999-skyportal.rules` file to the `/etc/udev/rules.d/` folder
@@ -11,4 +13,12 @@ commands to have the device accessible from normal users:
 ```
 sudo cp system/999-skyportal.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
+```
+
+### MacOS
+
+Listing USB devices:
+
+```
+system_profiler SPUSBDataType
 ```
