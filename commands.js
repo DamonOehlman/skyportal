@@ -1,25 +1,7 @@
-/* jshint node: true */
-'use strict';
-
 /**
-  ## Commands
-
-  These are command generators for commands supported on the device.
-
-**/
-
-/**
-  ### activate
-
   The activate command is sent to the device after a reset.
-
-  ```
-  [0x41, 0x01]
-  ```
 **/
-exports.activate = function() {
-  return [0x41, 0x01];
-};
+exports.activate = () => ([0x41, 0x01]);
 
 /**
   ### color(r, g, b)
@@ -33,8 +15,8 @@ exports.activate = function() {
   ```
 
 **/
-exports.color = function(r, g, b) {
-  return [0x43].concat(Array.isArray(r) ? r : [].slice.call(arguments));
+exports.color = (r, g, b) => {
+  return Array.isArray(r) ? [0x43, ...r] : [0x43, r, g, b];
 };
 
 
@@ -47,23 +29,7 @@ exports.color = function(r, g, b) {
   ```
   [0x51, 0x20 + tagIdx, blockIdx]
 **/
-exports.query = function(tagIdx, blockIdx) {
-  return [0x51, (blockIdx ? 0x10 : 0x20) + tagIdx, blockIdx];
-};
+exports.query = (tagIdx, blockIdx) => ([0x51, (blockIdx ? 0x10 : 0x20) + tagIdx, blockIdx]);
 
-/**
-  ### reset
-
-  Reset the device ready for use.
-
-  ```
-  [0x52]
-  ```
-**/
-exports.reset = function() {
-  return [0x52];
-};
-
-exports.status = function() {
-  return [0x53];
-};
+exports.reset = () => ([0x52]);
+exports.status = () => ([0x53]);

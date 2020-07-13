@@ -5,14 +5,14 @@ const times = require('whisk/times');
 const vendorList = [0x1430];
 const productList = [
   0x1f17,  // usb wired (pc, xbox)
-  0x0150   // wii wireless (also ps3?)
+  0x0150,  // wii wireless (also ps3?)
 ];
 
 // initialise the command prefixes which matches index for index with
 // the product list
 const commandPrefixes = [
   [0x0B, 0x14],
-  []
+  [0x0B, 0x14],
 ];
 
 // initialise the input endpoints for the various product ids
@@ -21,7 +21,8 @@ const inpoints = [
 ];
 // initialise the output endpoints for the various product ids
 const outpoints = [
-  0x02
+  0x02,
+  0x01,
 ];
 
 const RESPONSE_SIZE = 0x20;
@@ -46,10 +47,15 @@ const find = index => {
 };
 
 const init = (opts, callback) => {
-  var portal;
-  var initCommands = [
-    commands.reset,
-    commands.activate
+  if (typeof opts == 'function') {
+    callback = opts;
+    opts = null;
+  }
+
+  const portal = find((opts || {}).index);
+  const initCommands = [
+    commands.reset(),
+    commands.activate(),
   ];
 
   function sendNextInit(err) {
@@ -64,19 +70,12 @@ const init = (opts, callback) => {
     send(initCommands.shift(), portal, sendNextInit);
   }
 
-  if (typeof opts == 'function') {
-    callback = opts;
-    opts = null;
-  }
-
-  open(portal = find((opts || {}).index), sendNextInit);
+  open(portal, sendNextInit);
   return portal;
 };
 
 const open = (portal, callback) => {
-  var device = (portal || {}).device;
-
-  // if we don't have a valid device, then abort
+  const device = (portal || {}).device;
   if (!device) {
     return callback(new Error('No device data'));
   }
@@ -90,15 +89,12 @@ const open = (portal, callback) => {
   }
 
   // reset the device and then open the interface
-  device.reset(function (err) {
-    var di;
-
+  device.reset(err => {
     if (err) {
       return callback(wrapUsbError('Could not perform reset', err));
     }
 
-    // select the portal interface
-    di = device.interface(0);
+    const di = device.interface(0);
 
     // if the kernel driver is active for the interface, release
     if (di.isKernelDriverActive()) {
@@ -108,11 +104,9 @@ const open = (portal, callback) => {
       portal._reattach = true;
     }
 
-    // claim the interface (um, horizon)
     try {
       di.claim();
-    }
-    catch (e) {
+    } catch (e) {
       return callback(wrapUsbError('Could not claim usb interface', e));
     }
 
@@ -129,17 +123,7 @@ const open = (portal, callback) => {
       return callback(new Error('Unable to find output interrupt'));
     }
 
-    // send the reset signal to the device
-    send(commands.reset(), portal, function (err) {
-      if (err) {
-        return callback(wrapUsbError('Could not send reset command', err));
-      }
-
-      // send the activate and trigger the outer callback
-      send(commands.activate(), portal, function (err) {
-        callback(err, err ? null : portal);
-      });
-    });
+    callback(null, portal);
   });
 };
 
@@ -149,9 +133,9 @@ const read = (portal, callback) => {
   }
 
   var prefixLen = portal.commandPrefix.length;
-  portal.i.transfer(RESPONSE_SIZE, function (err, data) {
-    debug('<-- ', data.length, data);
-    callback(err, err ? null : (prefixLen ? data.slice(prefixLen) : data));
+  portal.i.transfer(RESPONSE_SIZE, (readErr, data) => {
+    debug(`RX ${data.length} bytes:`, data);
+    callback(readErr, readErr ? null : (prefixLen ? data.slice(prefixLen) : data));
   });
 };
 
@@ -161,11 +145,11 @@ const send = (bytes, portal, callback) => {
   }
 
   // TODO: handle bytes being provided in another format
-  const payload = portal.commandPrefix.concat(bytes || []);
-  const data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
+  const payload = [...portal.commandPrefix, ...bytes];
+  const data = Buffer.from([...payload, ...REQUEST_PADDING.slice(payload.length)]);
 
   // send the data
-  debug('--> ', data.length, data);
+  debug(`TX ${data.length} bytes:`, data);
   portal.o.transfer(data, callback);
 };
 
@@ -174,12 +158,11 @@ const sendRaw = (bytes, portal, callback) => {
     return callback(new Error('no portal output attached'));
   }
 
-  // TODO: handle bytes being provided in another format
-  const payload = portal.commandPrefix.concat(bytes || []);
-  const data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
+  const payload = [...portal.commandPrefix, ...payload.bytes];
+  const data = Buffer.from([...payload, ...REQUEST_PADDING.slice(payload.length)]);
 
   // send the data
-  debug('--> ', data.length, data);
+  debug(`TX ${data.length} bytes:`, data);
   portal.o.transfer(data, callback);
 };
 
