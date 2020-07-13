@@ -1,108 +1,51 @@
-/* jshint node: true */
-'use strict';
-
-var commands = exports.commands = require('./commands');
-var debug = require('debug')('skyportal');
-var usb = require('usb');
-var times = require('whisk/times');
-var vendorList = [0x1430];
-var productList = [
+const commands = require('./commands');
+const debug = require('debug')('skyportal');
+const usb = require('usb');
+const times = require('whisk/times');
+const vendorList = [0x1430];
+const productList = [
   0x1f17,  // usb wired (pc, xbox)
   0x0150   // wii wireless (also ps3?)
 ];
 
 // initialise the command prefixes which matches index for index with
 // the product list
-var commandPrefixes = [
+const commandPrefixes = [
   [0x0B, 0x14],
   []
 ];
 
 // initialise the input endpoints for the various product ids
-var inpoints = [
+const inpoints = [
   0x81
 ];
 // initialise the output endpoints for the various product ids
-var outpoints = [
+const outpoints = [
   0x02
 ];
 
-var RESPONSE_SIZE = 0x20;
-var REQUEST_PADDING = times(RESPONSE_SIZE).map(function() {
+const RESPONSE_SIZE = 0x20;
+const REQUEST_PADDING = times(RESPONSE_SIZE).map(function () {
   return 0;
 });
 
-
-/**
-  # skyportal
-
-  This is a top-level interface to an rfid reader and writer that happens
-  to double as a very nice glowy thing.  The library itself have been written
-  to support multiple skyportals on the one machine allowing you do so
-  some pretty neat things when you have a few usb ports spare :)
-
-  ## Usage
-
-  This module does just the bare bones required to communicate with the
-  device, but does make interfacing with a skyportal pretty accessible.  The
-  follow example demonstrates opening a portal and setting it's color to
-  green.
-
-  <<< examples/green-portal.js
-
-  __NOTE:__ Running the examples (at least on my machine required root user
-  privileges to open the device, so you may need to `sudo` the examples).
-
-  ## Compatibility
-
-  At this stage this has only been tested with the USB version of the portal
-  (Xbox 360) on Linux.  It has been coded in such a way that compatibility
-  with other portal models is quite easy to implement, so feel to send
-  through a pull request :)
-
-  You may need to apply some system updates to get it working though, see the
-  following url for more info:
-
-  https://bitbucket.org/DamonOehlman/skyportal/src/HEAD/system/
-
-  ## Reference
-
-  ### skyportal.find(index == 0)
-
-  Look for a skyportal within the current usb devices.
-
-**/
-var find = exports.find = function(index) {
-  var device;
-  var productIdx;
-
+const find = index => {
   // get the portal
-  device = usb.getDeviceList().filter(isPortal)[index || 0];
-
-  // if we don't have a device, return
-  if (! device) {
+  const device = usb.getDeviceList().filter(isPortal)[index || 0];
+  if (!device) {
     return;
   }
 
   // find the product index so we can patch in the appropriate command prefix
-  productIdx = productList.indexOf(device.deviceDescriptor.idProduct);
-
+  const productIdx = productList.indexOf(device.deviceDescriptor.idProduct);
   return {
     commandPrefix: commandPrefixes[productIdx] || [],
-    device: device,
-    productIdx: productIdx
+    device,
+    productIdx,
   };
 };
 
-/**
-  ### skyportal.init(opts?, callback)
-
-  The `init` function of the skyportal module is best way to get yourself a
-  correctly open initialized portal.  In short, you should pretty much
-  always use it.
-
-**/
-var init = exports.init = function(opts, callback) {
+const init = (opts, callback) => {
   var portal;
   var initCommands = [
     commands.reset,
@@ -130,18 +73,11 @@ var init = exports.init = function(opts, callback) {
   return portal;
 };
 
-/**
-  ### skyportal.open(portal, callback)
-
-  Open the portal using the portal data that has been retrieved
-  from a find operation.
-
-**/
-var open = exports.open = function(portal, callback) {
+const open = (portal, callback) => {
   var device = (portal || {}).device;
 
   // if we don't have a valid device, then abort
-  if (! device) {
+  if (!device) {
     return callback(new Error('No device data'));
   }
 
@@ -154,7 +90,7 @@ var open = exports.open = function(portal, callback) {
   }
 
   // reset the device and then open the interface
-  device.reset(function(err) {
+  device.reset(function (err) {
     var di;
 
     if (err) {
@@ -179,7 +115,7 @@ var open = exports.open = function(portal, callback) {
     catch (e) {
       return callback(wrapUsbError('Could not claim usb interface', e));
     }
-    
+
     // patch in the input and output endpoints
     portal.i = di.endpoint(inpoints[portal.productIdx] || 0x81);
     portal.o = di.endpoint(outpoints[portal.productIdx] || 0x02);
@@ -194,66 +130,53 @@ var open = exports.open = function(portal, callback) {
     }
 
     // send the reset signal to the device
-    send(commands.reset(), portal, function(err) {
+    send(commands.reset(), portal, function (err) {
       if (err) {
         return callback(wrapUsbError('Could not send reset command', err));
       }
 
       // send the activate and trigger the outer callback
-      send(commands.activate(), portal, function(err) {
+      send(commands.activate(), portal, function (err) {
         callback(err, err ? null : portal);
       });
     });
   });
 };
 
-/**
-  ### skyportal.read(portal, callback)
-
-  Read data from the portal.
-
-**/
-var read = exports.read = function(portal, callback) {
+const read = (portal, callback) => {
   if (!portal || !portal.i) {
     return callback(new Error('no portal input attached'));
   }
 
   var prefixLen = portal.commandPrefix.length;
-  portal.i.transfer(RESPONSE_SIZE, function(err, data) {
+  portal.i.transfer(RESPONSE_SIZE, function (err, data) {
     debug('<-- ', data.length, data);
     callback(err, err ? null : (prefixLen ? data.slice(prefixLen) : data));
   });
 };
 
-/**
-  ### skyportal.send(bytes, portal, callback)
-
-  Send a chunk of bytes to the portal. If required the device appropriate
-  command prefix will be prepended to the bytes before sending.
-
-**/
-var send = exports.send = function(bytes, portal, callback) {
+const send = (bytes, portal, callback) => {
   if (!portal || !portal.o) {
     return callback(new Error('no portal output attached'));
   }
 
   // TODO: handle bytes being provided in another format
-  var payload = portal.commandPrefix.concat(bytes || []);
-  var data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
+  const payload = portal.commandPrefix.concat(bytes || []);
+  const data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
 
   // send the data
   debug('--> ', data.length, data);
   portal.o.transfer(data, callback);
 };
 
-var sendRaw = exports.sendRaw = function(bytes, portal, callback) {
+const sendRaw = (bytes, portal, callback) => {
   if (!portal || !portal.o) {
     return callback(new Error('no portal output attached'));
   }
 
   // TODO: handle bytes being provided in another format
-  var payload = portal.commandPrefix.concat(bytes || []);
-  var data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
+  const payload = portal.commandPrefix.concat(bytes || []);
+  const data = new Buffer(payload.concat(REQUEST_PADDING.slice(payload.length)));
 
   // send the data
   debug('--> ', data.length, data);
@@ -266,19 +189,19 @@ var sendRaw = exports.sendRaw = function(bytes, portal, callback) {
   Release the portal device bindings.
 
 **/
-var release = exports.release = function(portal, callback) {
+const release = (portal, callback) => {
   var device = (portal || {}).device;
   var di = device ? device.interface(0) : null;
 
   // ensure we have a callback
-  callback = callback || function() {};
+  callback = callback || function () { };
 
   // if we don't have a valid device, then abort
-  if (! di) {
+  if (!di) {
     return callback(new Error('No device data'));
   }
 
-  di.release(function(err) {
+  di.release(err => {
     if (err) {
       return callback(err);
     }
@@ -301,6 +224,17 @@ var release = exports.release = function(portal, callback) {
   });
 };
 
+module.exports = {
+  commands,
+  find,
+  init,
+  open,
+  read,
+  send,
+  sendRaw,
+  release,
+};
+
 /* internal functions */
 
 function isPortal(device) {
@@ -309,7 +243,7 @@ function isPortal(device) {
 }
 
 function wrapUsbError(msg, usbError) {
-  var err = new Error(msg + ' (libusb error: ' + usbError.toString() + ')');
+  const err = new Error(msg + ' (libusb error: ' + usbError.toString() + ')');
 
   // attach the usb error
   err.usb = usbError;
