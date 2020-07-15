@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node test/all.js",
-    "gendocs": "gendocs > README.md"
+    "gendocs": "embellish README.md"
   },
   "repository": {
     "type": "git",
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "async": "^2.0.0-rc.3",
+    "embellish-readme": "^1.6.0",
     "tape": "^4.5.1"
   }
 }
