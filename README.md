@@ -5,10 +5,9 @@ to double as a very nice glowy thing.  The library itself have been written
 to support multiple skyportals on the one machine allowing you do so
 some pretty neat things when you have a few usb ports spare :)
 
-
 [![NPM](https://nodei.co/npm/skyportal.png)](https://nodei.co/npm/skyportal/)
 
-[![experimental](https://img.shields.io/badge/stability-experimental-red.svg)](https://github.com/dominictarr/stability#experimental) 
+
 
 ## Usage
 
@@ -18,16 +17,34 @@ follow example demonstrates opening a portal and setting it's color to
 green.
 
 ```js
-var skyportal = require('skyportal');
-var commands = skyportal.commands;
+const { commands, init, send } = require('skyportal');
 
-skyportal.init(function(err, portal) {
-  skyportal.send(commands.color(0, 255, 0), portal);
+init((err, portal) => {
+  if (err) {
+    console.error(err);
+    return;
+  }
+
+  send(commands.color(0, 255, 0), portal);
 });
-
 ```
 
-__NOTE:__ Running the examples (at least on my machine required root user
+## Required System Permissions
+
+On linux, by default super user privileges are required to open a USB device. It
+is possible, however, to add udev rules to mark a device as something that can
+be used by all users.  Included in this repo is a system configuration file
+which will do that for the various devices this package is compatible with.
+
+If you wish to do this, you can run the following commands (but you are
+also encouraged to look at the referenced rules file also):
+
+```sh
+sudo cp system/999-skyportal.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+```
+
+**NOTE:** Running the examples (at least on my machine required root user
 privileges to open the device, so you may need to `sudo` the examples).
 
 ## Compatibility
@@ -40,97 +57,28 @@ through a pull request :)
 You may need to apply some system updates to get it working though, see the
 following url for more info:
 
-https://bitbucket.org/DamonOehlman/skyportal/src/HEAD/system/
+<https://bitbucket.org/DamonOehlman/skyportal/src/HEAD/system/>
 
-## Reference
+## LICENSE
 
-### skyportal.find(index == 0)
+The MIT License (MIT)
 
-Look for a skyportal within the current usb devices.
+Copyright (c) 2020 Damon Oehlman <damon.oehlman@gmail.com>
 
-### skyportal.init(opts?, callback)
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-The `init` function of the skyportal module is best way to get yourself a
-correctly open initialized portal.  In short, you should pretty much
-always use it.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-### skyportal.open(portal, callback)
-
-Open the portal using the portal data that has been retrieved
-from a find operation.
-
-### skyportal.read(portal, callback)
-
-Read data from the portal.
-
-### skyportal.send(bytes, portal, callback)
-
-Send a chunk of bytes to the portal. If required the device appropriate
-command prefix will be prepended to the bytes before sending.
-
-### skyportal.release(portal, callback)
-
-Release the portal device bindings.
-
-## Commands
-
-These are command generators for commands supported on the device.
-
-### activate
-
-The activate command is sent to the device after a reset.
-
-```
-[0x41, 0x01]
-```
-
-### color(r, g, b)
-
-Update the color of the glowing thing by providing rgb values.  This
-function also supports providing a three element array as the first
-argument for rgb.
-
-```
-[0x43, 0xRR, 0xGG, 0xBB]
-```
-
-### query(tagIdx, blockIdx)
-
-Query a tag that is currently on the portal.  Data is returned in blocks,
-so use the `blockIdx` to target a specific block of data.
-
-```
-[0x51, 0x20 + tagIdx, blockIdx]
-
-### reset
-
-Reset the device ready for use.
-
-```
-[0x52]
-```
-
-## License(s)
-
-### MIT
-
-Copyright (c) 2016 Damon Oehlman <damon.oehlman@gmail.com>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-'Software'), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
